@@ -7,6 +7,7 @@
 
 import { createPresetManager } from './presets.js';
 import { processBatch } from './pipeline.js';
+import { computeZipFilename } from './naming.js';
 import { formatBytes } from './utils.js';
 
 // DOM elements
@@ -154,17 +155,18 @@ processBtn.addEventListener('click', async () => {
 		progressText.textContent = `${pct}%`;
 	};
 
-	try {
-		const zipBlob = await processBatch({ files: selectedFiles.map(f => f.file), presets, globalOptions, onProgress });
-		const url = URL.createObjectURL(zipBlob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = `resized_${new Date().toISOString().replace(/[:.]/g,'-')}.zip`;
-		document.body.appendChild(a);
-		a.click();
-		a.remove();
-		setTimeout(() => URL.revokeObjectURL(url), 2000);
-	} catch (err) {
+    try {
+        const inputFiles = selectedFiles.map(f => f.file);
+        const zipBlob = await processBatch({ files: inputFiles, presets, globalOptions, onProgress });
+        const url = URL.createObjectURL(zipBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = computeZipFilename(inputFiles);
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+    } catch (err) {
 		console.error(err);
 		alert('Error during processing. See console for details.');
 	} finally {
